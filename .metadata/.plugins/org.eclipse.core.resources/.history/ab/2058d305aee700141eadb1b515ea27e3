@@ -1,0 +1,137 @@
+/*
+Project #4
+Due Dates:  Monday, April 20 at 11:59pm 
+Objective:
+     Implement an external sort routine.
+
+Description:
+     Create a class called ExternalSort.
+     Your class should have the following methods.  
+     You may use code from the textbook, but all other code must be
+     your own.
+
+   a) public static void external_sort(int size)
+
+          Uses the external sort procedure illustrated in chapter 7 to sort using the passed size as the run size.
+
+          For the tapes, use files named T1-T4.  The data should already be on T1 when this method is called. 
+          The data consists of Integers.
+
+          As it runs, it should print its progress as in this example:
+
+             Writing runs of size 4 to T3 and T4.
+             16 runs written.
+             Merging to T1 and T2.
+             Merging to T3 and T4.
+             ...
+             Final merge to T3.
+             Done
+          
+   b) public static void main(String args[])
+
+          Accepts run size as a command line argument.
+          Assumes input already exists on a file named T1.
+          Calls the external sort routine.
+
+Submit to eLearning:
+     ExternalSort.java
+
+ */
+
+import java.util.*;
+import java.io.*;
+
+public class Sort {
+
+	static boolean firstRun = true, writeToT34 = false, writeToT12 = false;
+	static int total = 0, dataValue, index = 0;
+	static Integer[] t1array, t2array, t3array, t4array;
+	static Integer[] data;
+	
+	static File t1 = new File("T1.txt"), t2 = new File("T2.txt"), t3 = new File("T3.txt"), t4 = new File("T4.txt");
+	
+	static Scanner br1, br2, br3, br4;
+	static PrintWriter bw1, bw2, bw3, bw4;
+	
+	Sort() throws IOException{
+		br1 = new Scanner(t1);
+		br2 = new Scanner(t2);
+		br3 = new Scanner(t3);
+		br4 = new Scanner(t4);
+	}
+	
+	public static void external_sort(int size) throws FileNotFoundException{
+		
+		data = new Integer[size];
+		
+		// IF this is the first run, find all the contents of T1 and put it into the other files
+		if(firstRun == true){
+			
+			File currentFile = null;
+			
+			bw3 = new PrintWriter(t3);
+			bw4 = new PrintWriter(t4);
+			while(br1.hasNextInt()){
+				System.out.println("in the while loop");
+				total++;	//While we're writing the data, calculate the total number of data points
+				dataValue = br1.nextInt();	// Make the next int the dataValue to write to the files
+				data[index] = dataValue;	// Place dataValue into the appropriate index
+				index++;					// Increment the index
+				
+				// If the index is greater than the size that was passed in the external sort...
+				if(index >= size){
+					System.out.println("Index is greater than or equal to size");
+					Arrays.sort(data);								// Sort the data array
+					index = 0;										// Restart the index
+					
+					if(currentFile == t3){
+						for(int i=0; i<data.length; i++){	
+							System.out.println("writing data to T3");// Write all the ints in "data" to the currently selected file 
+							//if(data[i] != null)
+								bw3.write(data[i].toString());
+						}
+					}
+					else{
+						for(int j=0; j<data.length; j++){	
+							System.out.println("writing data to T4");// Write all the ints in "data" to the currently selected file 
+							//if(data[j] != null)
+								bw4.write(data[j].toString());
+						}
+					}
+					writeToT34 = !writeToT34;		// Flip the file we will write to
+													// if writeToT34 = true (write to T3), else write to T4
+				}
+				
+				if(writeToT34)
+					currentFile = t3;
+				else
+					currentFile = t4;
+				
+			}
+			
+			
+			System.out.println("end of the first run");
+			firstRun = false;
+			br1.close();
+			br3.close();
+			br4.close();
+		}
+		
+		
+	}
+	
+	public static void main(String[] args) throws IOException {
+		Scanner keyboard = new Scanner(System.in);
+		
+		System.out.println("Input the run size you wish to sort with :: ");
+		
+		int userInput = keyboard.nextInt();
+		
+		Sort test = new Sort();
+		test.external_sort(userInput);
+		
+		System.out.println("end of program");
+
+	}
+
+}

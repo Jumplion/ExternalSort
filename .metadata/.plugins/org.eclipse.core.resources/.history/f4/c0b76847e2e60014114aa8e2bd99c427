@@ -1,0 +1,229 @@
+/*
+Project #4
+Due Dates:  Monday, April 20 at 11:59pm 
+Objective:
+     Implement an external sort routine.
+
+Description:
+     Create a class called ExternalSort.
+     Your class should have the following methods.  
+     You may use code from the textbook, but all other code must be
+     your own.
+
+   a) public static void external_sort(int size)
+
+          Uses the external sort procedure illustrated in chapter 7 to sort using the passed size as the run size.
+
+          For the tapes, use files named T1-T4.  The data should already be on T1 when this method is called. 
+          The data consists of Integers.
+
+          As it runs, it should print its progress as in this example:
+
+             Writing runs of size 4 to T3 and T4.
+             16 runs written.
+             Merging to T1 and T2.
+             Merging to T3 and T4.
+             ...
+             Final merge to T3.
+             Done
+          
+   b) public static void main(String args[])
+
+          Accepts run size as a command line argument.
+          Assumes input already exists on a file named T1.
+          Calls the external sort routine.
+
+Submit to eLearning:
+     ExternalSort.java
+
+ * 
+ */
+
+import java.util.*;
+import java.io.*;
+
+public class ExSort {
+	
+	static Integer[] t1array, t2array, t3array, t4array;
+	
+	static File t1 = new File("T1.txt"), t2 = new File("T2.txt"), t3 = new File("T3.txt"), t4 = new File("T4.txt");
+	
+	static Scanner br1, br2, br3, br4;
+	static PrintWriter bw1, bw2, bw3, bw4;
+	
+	ExSort() throws IOException{
+		br1 = new Scanner(t1);
+		br2 = new Scanner(t2);
+		br3 = new Scanner(t3);
+		br4 = new Scanner(t4);
+	}
+	
+	public static void external_sort(int size) throws IOException {
+		
+		int value, total = 0, t3index = 0, t4index = 0, incrementSize = size;
+		
+		t3array = t4array = new Integer[size];
+		
+		System.out.println("Writing runs of size " + size + " to T3 and T4...");
+		
+		while(br1.hasNextInt()){	
+			
+			value = br1.nextInt();
+			
+			if(t3index != size){
+
+				t3array[t3index] = value;
+				t3index++;
+			}	
+			else if(t4index != size){
+
+				t4array[t4index] = value;
+				t4index++;		
+
+			}
+			if(t3index >= size && t4index >= size){
+				size += incrementSize;	// Double the size of the partition
+				
+				//Increase the size of the array to store more information
+				t3array = increaseArrayLength(t3array, size);
+				t4array = increaseArrayLength(t4array, size);
+			}
+			total++;
+		}
+		
+		// Trim the arrays if needed (for example, at the end of reading the file)
+		t3array = cutFat(t3array);
+		t4array = cutFat(t4array);
+		
+		// Sort the arrays here
+		mergeSort(t3array);
+		mergeSort(t4array);
+		
+		//Write the data to their respective arrays
+		writeToFile(t3, t3array);
+		writeToFile(t4,t4array);
+
+		
+		
+		//All the integers from T1 have been written to T3 and T4. Sort them both independently for now
+		System.out.println(total + " runs written.");
+
+	}
+	
+	// Gets rid of all the NULL values in the passed array - returns the trimmed array
+	public static Integer[] cutFat(Integer[] a){
+		
+		Integer[] newArray = null;
+		
+		for(int i=0; i<a.length; i++)
+			if(a[i] == null){
+				newArray = new Integer[i];
+				i = a.length;
+			}
+			else
+				newArray = new Integer[a.length];
+
+		for(int i=0; i < newArray.length; i++)
+			newArray[i] = a[i];
+		
+		return newArray;
+	}
+	
+	// Increases the passed array's size - returns the new array
+	public static Integer[] increaseArrayLength(Integer[] a, int increment){
+		
+		Integer[] newArray = new Integer[a.length+increment];
+		for(int i=0; i <a.length; i++)
+			newArray[i] = a[i];
+		return newArray;
+	}
+
+	public static void writeToFile(File f, Integer[] a) throws FileNotFoundException{
+		
+		PrintWriter wrt = new PrintWriter(f);
+		
+		for(int n=0; n<a.length; n++){
+			wrt.write(a[n].toString());
+			wrt.write("\n");
+		}
+		
+		wrt.close();
+			
+	}
+	
+	/**
+	* Mergesort algorithm.
+	* @param a an array of Comparable items.
+	*/
+	public static <AnyType extends Comparable<? super AnyType>> void mergeSort( AnyType [ ] a ){
+		 @SuppressWarnings("unchecked")
+		AnyType [ ] tmpArray = (AnyType[]) new Comparable[ a.length ];
+		 mergeSort( a, tmpArray, 0, a.length - 1 );
+	 }
+	
+	/**
+	* Internal method that makes recursive calls.
+	* @param a an array of Comparable items.
+	* @param tmpArray an array to place the merged result.
+	* @param left the left-most index of the subarray.
+	* @param right the right-most index of the subarray.
+	*/
+	private static <AnyType extends Comparable<? super AnyType>> void mergeSort( AnyType [ ] a, AnyType [ ] tmpArray, int left, int right ){
+		
+		// If the list is more than just 1 element
+		if( left < right ){
+			
+			//The center is the middle of the passed list
+			int center = ( left + right ) / 2;
+		 	mergeSort( a, tmpArray, left, center );			// MergeSort the left - center array  (basically breaking it up)
+		 	mergeSort( a, tmpArray, center + 1, right );	// MergeSort the center - right array (basically breaking it up)
+		 	merge( a, tmpArray, left, center + 1, right );	// Now, merge the two lists, as we are at the bottom of the recursion
+		 }
+	 }
+	
+	/**
+	* Internal method that merges two sorted halves of a subarray.
+	* @param a an array of Comparable items.
+	* @param tmpArray an array to place the merged result.
+	* @param leftPos the left-most index of the subarray.
+	* @param rightPos the index of the start of the second half.
+	* @param rightEnd the right-most index of the subarray.
+	*/
+	private static <AnyType extends Comparable<? super AnyType>> void merge( AnyType [ ] a, AnyType [ ] tmpArray, int leftPos, int rightPos, int rightEnd ) {
+		 
+		int leftEnd = rightPos - 1;
+		int tmpPos = leftPos;
+		int numElements = rightEnd - leftPos + 1;
+		
+		// Main loop
+		while( leftPos <= leftEnd && rightPos <= rightEnd )
+			if( a[ leftPos ].compareTo( a[ rightPos ] ) <= 0 )
+				tmpArray[ tmpPos++ ] = a[ leftPos++ ];
+			else
+				tmpArray[ tmpPos++ ] = a[ rightPos++ ];
+		
+		while( leftPos <= leftEnd ) // Copy rest of first half
+			tmpArray[ tmpPos++ ] = a[ leftPos++ ];
+		while( rightPos <= rightEnd ) // Copy rest of right half
+			tmpArray[ tmpPos++ ] = a[ rightPos++ ];
+		
+		// Copy tmpArray back
+		for( int i = 0; i < numElements; i++, rightEnd-- )
+			a[ rightEnd ] = tmpArray[ rightEnd ];
+	 }
+	  
+	public static void main(String[] args) throws IOException {
+			
+		Scanner keyboard = new Scanner(System.in);
+			
+		System.out.println("Enter your run size: ");
+		int userInput = keyboard.nextInt();
+
+		ExSort test = new ExSort();
+		test.external_sort(userInput);
+
+		System.out.println("end");
+
+	}
+
+}

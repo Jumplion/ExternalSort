@@ -1,0 +1,187 @@
+/*
+Project #4
+Due Dates:  Monday, April 20 at 11:59pm 
+Objective:
+     Implement an external sort routine.
+
+Description:
+     Create a class called ExternalSort.
+     Your class should have the following methods.  
+     You may use code from the textbook, but all other code must be
+     your own.
+
+   a) public static void external_sort(int size)
+
+          Uses the external sort procedure illustrated in chapter 7 to sort using the passed size as the run size.
+
+          For the tapes, use files named T1-T4.  The data should already be on T1 when this method is called. 
+          The data consists of Integers.
+
+          As it runs, it should print its progress as in this example:
+
+             Writing runs of size 4 to T3 and T4.
+             16 runs written.
+             Merging to T1 and T2.
+             Merging to T3 and T4.
+             ...
+             Final merge to T3.
+             Done
+          
+   b) public static void main(String args[])
+
+          Accepts run size as a command line argument.
+          Assumes input already exists on a file named T1.
+          Calls the external sort routine.
+
+Submit to eLearning:
+     ExternalSort.java
+
+ * 
+ */
+
+import java.util.*;
+import java.io.*;
+
+public class ExternalSort {
+	
+	static Integer[] t1array, t2array, t3array, t4array;
+	
+	static File t1 = new File("T1.txt"), t2 = new File("T2.txt"), t3 = new File("T3.txt"), t4 = new File("T4.txt");
+	
+	static Scanner br1, br2, br3, br4;
+	static PrintWriter bw1, bw2, bw3, bw4;
+	
+	ExternalSort() throws IOException{
+		br1 = new Scanner(t1);
+		br2 = new Scanner(t2);
+		br3 = new Scanner(t3);
+		br4 = new Scanner(t4);
+	}
+	
+	public static void external_sort(int size) throws IOException {
+		
+		String line;
+		int value, total = 0, t1index = 0;
+		
+		System.out.println("Finding out how big the file is...");
+		
+		// Find out how big T1 is
+		while(br1.hasNextInt()){
+			br1.nextInt();
+			total++;
+		}
+		
+		// Initialize T1's array (and all the other arrays) so we know its size
+		t1array = t2array = t3array = t4array = new Integer[total];
+		
+		System.out.println("Transfering all the data to T1 array...");
+		
+		br1 = new Scanner(t1);
+		// Write all the data to T1's data array
+		while(br1.hasNextInt()){
+			value = br1.nextInt();
+			t1array[t1index] = value;
+			t1index++;	
+		}
+		
+		System.out.println("Writing runs of size " + size + " to T3 and T4...");
+		
+		//All the integers from T1 have been written to T3 and T4. Sort them both independently for now
+		System.out.println(total + " runs written.");
+		
+		
+		
+		
+		
+		//Merge the t1array
+		mergeSort(t1array);
+		bw1 = new PrintWriter(t1);
+		for(int i=0; i<t1array.length; i++){
+			bw1.write(String.valueOf(t1array[i]));
+			bw1.write("\n");
+		}
+		
+		// Close all the Buffered Writers
+		bw1.close();
+		bw2.close();
+		bw3.close();
+		bw4.close();
+		
+	}
+	
+	/**
+	* Mergesort algorithm.
+	* @param a an array of Comparable items.
+	*/
+	public static <AnyType extends Comparable<? super AnyType>> void mergeSort( AnyType [ ] a ){
+		 @SuppressWarnings("unchecked")
+		AnyType [ ] tmpArray = (AnyType[]) new Comparable[ a.length ];
+		 mergeSort( a, tmpArray, 0, a.length - 1 );
+	 }
+	
+	/**
+	* Internal method that makes recursive calls.
+	* @param a an array of Comparable items.
+	* @param tmpArray an array to place the merged result.
+	* @param left the left-most index of the subarray.
+	* @param right the right-most index of the subarray.
+	*/
+	private static <AnyType extends Comparable<? super AnyType>> void mergeSort( AnyType [ ] a, AnyType [ ] tmpArray, int left, int right ){
+		
+		// If the list is more than just 1 element
+		if( left < right ){
+			
+			//The center is the middle of the passed list
+			int center = ( left + right ) / 2;
+		 	mergeSort( a, tmpArray, left, center );			// MergeSort the left - center array  (basically breaking it up)
+		 	mergeSort( a, tmpArray, center + 1, right );	// MergeSort the center - right array (basically breaking it up)
+		 	merge( a, tmpArray, left, center + 1, right );	// Now, merge the two lists, as we are at the bottom of the recursion
+		 }
+	 }
+	
+	/**
+	* Internal method that merges two sorted halves of a subarray.
+	* @param a an array of Comparable items.
+	* @param tmpArray an array to place the merged result.
+	* @param leftPos the left-most index of the subarray.
+	* @param rightPos the index of the start of the second half.
+	* @param rightEnd the right-most index of the subarray.
+	*/
+	private static <AnyType extends Comparable<? super AnyType>> void merge( AnyType [ ] a, AnyType [ ] tmpArray, int leftPos, int rightPos, int rightEnd ) {
+		 
+		int leftEnd = rightPos - 1;
+		int tmpPos = leftPos;
+		int numElements = rightEnd - leftPos + 1;
+		
+		// Main loop
+		while( leftPos <= leftEnd && rightPos <= rightEnd )
+			if( a[ leftPos ].compareTo( a[ rightPos ] ) <= 0 )
+				tmpArray[ tmpPos++ ] = a[ leftPos++ ];
+			else
+				tmpArray[ tmpPos++ ] = a[ rightPos++ ];
+		
+		while( leftPos <= leftEnd ) // Copy rest of first half
+			tmpArray[ tmpPos++ ] = a[ leftPos++ ];
+		while( rightPos <= rightEnd ) // Copy rest of right half
+			tmpArray[ tmpPos++ ] = a[ rightPos++ ];
+		
+		// Copy tmpArray back
+		for( int i = 0; i < numElements; i++, rightEnd-- )
+			a[ rightEnd ] = tmpArray[ rightEnd ];
+	 }
+	  
+	public static void main(String[] args) throws IOException {
+			
+		Scanner keyboard = new Scanner(System.in);
+			
+		System.out.println("Enter your run size: ");
+		int userInput = keyboard.nextInt();
+
+		ExternalSort test = new ExternalSort();
+		test.external_sort(userInput);
+
+		System.out.println("end");
+
+	}
+
+}

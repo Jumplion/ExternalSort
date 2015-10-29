@@ -1,0 +1,385 @@
+/*
+Project #4
+Due Dates:  Monday, April 20 at 11:59pm 
+Objective:
+     Implement an external sort routine.
+
+Description:
+     Create a class called ExternalSort.
+     Your class should have the following methods.  
+     You may use code from the textbook, but all other code must be
+     your own.
+
+   a) public static void external_sort(int size)
+
+          Uses the external sort procedure illustrated in chapter 7 to sort using the passed size as the run size.
+
+          For the tapes, use files named T1-T4.  The data should already be on T1 when this method is called. 
+          The data consists of Integers.
+
+          As it runs, it should print its progress as in this example:
+
+             Writing runs of size 4 to T3 and T4.
+             16 runs written.
+             Merging to T1 and T2.
+             Merging to T3 and T4.
+             ...
+             Final merge to T3.
+             Done
+          
+   b) public static void main(String args[])
+
+          Accepts run size as a command line argument.
+          Assumes input already exists on a file named T1.
+          Calls the external sort routine.
+
+Submit to eLearning:
+     ExternalSort.java
+
+ */
+
+import java.util.*;
+import java.io.*;
+
+public class Sort {
+
+	public static void main(String[] args) throws IOException {
+		Scanner keyboard = new Scanner(System.in);
+		
+		System.out.println("Input the run size you wish to sort with :: ");
+		
+		int userInput = keyboard.nextInt();
+		
+		Sort test = new Sort();
+		test.external_sort(userInput);
+		
+		System.out.println("end of program");
+
+	}
+	
+	public static Integer[] cutFat(Integer[] a){
+		
+		Integer[] newArray = null;
+		
+		for(int i=0; i<a.length; i++)
+			if(a[i] == null){
+				newArray = new Integer[i];
+				i = a.length;
+			}
+			else
+				newArray = new Integer[a.length];
+
+		for(int i=0; i < newArray.length; i++)
+			newArray[i] = a[i];
+		
+		return newArray;
+	}
+
+						/** True = T3, False = T4		True = T1, False = T2 **/
+	static boolean firstRun = true, writeToT34 = false, writeToT12 = false;
+	static int total = 0, dataValue, index = 0;
+	static Integer[] t1array, t2array, t3array, t4array;
+	static Integer[] data;
+	
+	static File t1 = new File("T1.txt"), t2 = new File("T2.txt"), t3 = new File("T3.txt"), t4 = new File("T4.txt");
+	static File lastFileWrittenTo;
+	
+	static Scanner reader_t1, reader_t2, reader_t3, reader_t4;
+	static PrintWriter writer_t1, writer_t2, writer_t3, writer_t4;
+	
+	public static void external_sort(int size) throws FileNotFoundException{
+		
+		int sizeIncrement = 2;
+		data = new Integer[size];
+		index = 0;
+		
+		// Do the first run, find all the contents of T1 and put it into the other files
+		firstRun(size);
+		
+		
+		// If this is NOT the first run, start going back and forth between the other two files
+		while(data.length < total){
+			index = 0;
+			
+			// Write to T1 and T2
+			if(writeToT12){
+				System.out.println("Merging to T3 and T4...");
+				
+				writer_t1 = new PrintWriter(t1);
+				writer_t2 = new PrintWriter(t2);
+				reader_t3 = new Scanner(t3);
+				reader_t4 = new Scanner(t4);
+				
+				while(reader_t3.hasNextInt()){
+					dataValue = reader_t3.nextInt();	// Make the next int the dataValue to write to the files
+					data[index] = dataValue;			// Place dataValue into the appropriate index
+					index++;							// Increment the index
+					if(index >= data.length){
+						cutFat(data);
+						Arrays.sort(data);								// Sort the data array
+						index = 0;										// Restart the index
+						
+						// Write to T1
+						if(writeToT12){
+							for(int i=0; i<data.length; i++){	
+								// Write all the ints in "data" to T1
+								if(data[i] != null)
+									writer_t1.write(data[i].toString() + "\n");
+								data[i] = null;	
+							}
+							lastFileWrittenTo = t1;
+						}
+						// Write to T2
+						else{
+							for(int j=0; j<data.length; j++){	
+								// Write all the ints in "data" to T2
+								if(data[j] != null)
+									writer_t2.write(data[j].toString() + "\n");
+								data[j] = null;
+							}
+							lastFileWrittenTo = t2;
+						}
+						writeToT12 = !writeToT12;		// Flip the file we will write to
+														// if writeToT12 = true (write to T3), else write to T4
+					}	
+				}
+				
+				while(reader_t4.hasNextInt()){
+					dataValue = reader_t4.nextInt();	// Make the next int the dataValue to write to the files
+					data[index] = dataValue;			// Place dataValue into the appropriate index
+					index++;							// Increment the index
+					if(index >= data.length){
+						cutFat(data);
+						Arrays.sort(data);								// Sort the data array
+						index = 0;										// Restart the index
+						
+						// Write to T1
+						if(writeToT12){
+							for(int i=0; i<data.length; i++){	
+								// Write all the ints in "data" to T1
+								if(data[i] != null)
+									writer_t1.write(data[i].toString() + "\n");
+								data[i] = null;
+							}
+							lastFileWrittenTo = t1;
+						}
+						// Write to T2
+						else{
+							for(int j=0; j<data.length; j++){	
+								// Write all the ints in "data" to T2
+								if(data[j] != null)
+									writer_t2.write(data[j].toString() + "\n");
+								data[j] = null;
+							}
+							lastFileWrittenTo = t2;
+						}
+						writeToT12 = !writeToT12;		// Flip the file we will write to
+														// if writeToT12 = true (write to T3), else write to T4
+					}	
+				}
+					
+				writer_t1.close();
+				writer_t2.close();
+				reader_t3.close();
+				reader_t3.close();
+				
+				writeToT12 = false;
+				writeToT34 = true;					
+			}
+			
+			// Write to T3 and T4
+			else{
+				System.out.println("Merging to T1 and T2...");
+				
+				reader_t1 = new Scanner(t1);
+				reader_t2 = new Scanner(t2);
+				writer_t3 = new PrintWriter(t3);
+				writer_t4 = new PrintWriter(t4);
+				
+				while(reader_t1.hasNextInt()){
+					dataValue = reader_t1.nextInt();	// Make the next int the dataValue to write to the files
+					data[index] = dataValue;			// Place dataValue into the appropriate index
+					index++;			
+					if(index >= data.length){
+						cutFat(data);
+						Arrays.sort(data);								// Sort the data array
+						index = 0;										// Restart the index
+						
+						if(writeToT34){
+							for(int i=0; i<data.length; i++){	
+								// Write all the ints in "data" to T3
+								if(data[i] != null)
+									writer_t3.write(data[i].toString() + "\n");
+								data[i] = null;
+							}
+							lastFileWrittenTo = t3;
+						}
+						else{
+							for(int j=0; j<data.length; j++){	
+								// Write all the ints in "data" to T3 
+								if(data[j] != null)
+									writer_t4.write(data[j].toString() + "\n");
+								data[j] = null;
+							}
+							lastFileWrittenTo = t4;
+						}
+						writeToT34 = !writeToT34;		// Flip the file we will write to
+														// if writeToT12 = true (write to T3), else write to T4
+					}	
+				}
+				
+				while(reader_t2.hasNextInt()){
+					dataValue = reader_t2.nextInt();	// Make the next int the dataValue to write to the files
+					data[index] = dataValue;			// Place dataValue into the appropriate index
+					index++;							// Increment the index
+					if(index >= data.length){
+						cutFat(data);
+						Arrays.sort(data);								// Sort the data array
+						index = 0;										// Restart the index
+						
+						if(writeToT34){
+							for(int i=0; i<data.length; i++){	
+								// Write all the ints in "data" to T3
+								if(data[i] != null)
+									writer_t3.write(data[i].toString() + "\n");
+								data[i] = null;
+							}
+							lastFileWrittenTo = t3;
+						}
+						else{
+							for(int j=0; j<data.length; j++){	
+								// Write all the ints in "data" to T4
+								if(data[j] != null)
+									writer_t4.write(data[j].toString() + "\n");
+								data[j] = null;
+							}
+							lastFileWrittenTo = t4;
+						}
+						writeToT34 = !writeToT34;		// Flip the file we will write to
+														// if writeToT12 = true (write to T3), else write to T4
+					}	
+				}
+				
+				reader_t1.close();
+				reader_t2.close();
+				writer_t3.close();
+				writer_t4.close();
+				
+				writeToT12 = true;
+				writeToT34 = false;
+			}
+			
+			// Increase the size of the array
+			sizeIncrement += 2;
+			data = new Integer[size*sizeIncrement];
+			
+		}
+				
+		//Write the rest of the data to the final file being written at
+		// At the end, if there is any let over, write the rest of the data to the currently selected file
+		
+		if(writer_t1 != null){writer_t1.close();}
+		if(writer_t2 != null){writer_t2.close();}
+		if(writer_t3 != null){writer_t3.close();}
+		if(writer_t4 != null){writer_t4.close();}
+		if(reader_t1 != null){reader_t1.close();}
+		if(reader_t2 != null){reader_t2.close();}
+		if(reader_t3 != null){reader_t3.close();}
+		if(reader_t4 != null){reader_t4.close();}
+		
+		System.out.println("Final merge to " + lastFileWrittenTo.getName());
+		
+/*		Scanner finalReader = new Scanner(lastFileWrittenTo);
+		while(finalReader.hasNextInt()){
+			dataValue = finalReader.nextInt();	// Make the next int the dataValue to write to the files
+			data[index] = dataValue;			// Place dataValue into the appropriate index
+			index++;
+		}
+		finalReader.close();
+		
+		cutFat(data);
+		Arrays.sort(data);
+		*/
+		PrintWriter finalWriter = new PrintWriter(lastFileWrittenTo);
+		for(int i=0; i<data.length; i++){	
+			// Write all the ints in "data" to T3
+			if(data[i] != null)
+				finalWriter.write(data[i].toString() + "\n");
+		}
+		finalWriter.close();
+
+		
+		System.out.println("Done");
+		
+
+		
+		
+	}
+	
+	
+	public static void firstRun(int size) throws FileNotFoundException{
+		writer_t3 = new PrintWriter(t3);	writer_t4 = new PrintWriter(t4);
+		
+		System.out.println("Writing runs of size " + size + " to T3 and T4...");
+		
+		reader_t1 = new Scanner(t1);
+		
+		while(reader_t1.hasNextInt()){
+			total++;	//While we're writing the data, calculate the total number of data points
+			dataValue = reader_t1.nextInt();	// Make the next int the dataValue to write to the files
+			data[index] = dataValue;	// Place dataValue into the appropriate index
+			index++;					// Increment the index
+			
+			// If the index is greater than the size that was passed in the external sort...
+			if(index >= size){
+				Arrays.sort(data);								// Sort the data array
+				index = 0;										// Restart the index
+				
+				if(writeToT34){
+					for(int i=0; i<data.length; i++){	
+						// Write all the ints in "data" to T3
+						if(data[i] != null)
+							writer_t3.write(data[i].toString() + "\n");
+						data[i] = null;
+					}
+				}
+				else{
+					for(int j=0; j<data.length; j++){	
+						// Write all the ints in "data" to T3 
+						if(data[j] != null)
+							writer_t4.write(data[j].toString() + "\n");
+						data[j] = null;
+					}
+				}
+				writeToT34 = !writeToT34;		// Flip the file we will write to
+												// if writeToT34 = true (write to T3), else write to T4
+			}
+		}
+		/** End of While loop **/
+		
+		// At the end, if there is any let over, write the rest of the data to the currently selected file
+		if(writeToT34){
+			for(int i=0; i<data.length; i++){	
+				// Write all the ints in "data" to T3
+				if(data[i] != null)
+					writer_t3.write(data[i].toString() + "\n");
+				data[i] = null;
+			}
+		}
+		else{
+			for(int j=0; j<data.length; j++){	
+				// Write all the ints in "data" to T3 
+				if(data[j] != null)
+					writer_t4.write(data[j].toString() + "\n");
+				data[j] = null;
+			}
+		}
+		System.out.println(total + " runs written.");
+		
+		reader_t1.close();
+		writer_t3.close();
+		writer_t4.close();
+	}
+
+
+}
